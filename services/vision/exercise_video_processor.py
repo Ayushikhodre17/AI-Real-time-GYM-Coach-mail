@@ -11,12 +11,6 @@ from detectors.lunges import LungesDetector
 from services.config.workout_config import POSE_CONNECTIONS
 
 
-def _load_mediapipe(self):
-    import mediapipe as mp
-    from mediapipe.tasks import python
-    from mediapipe.tasks.python import vision
-    return mp, python, vision
-
 class VideoProcessorClass(VideoProcessorBase):
     def __init__(self):
         
@@ -24,6 +18,7 @@ class VideoProcessorClass(VideoProcessorBase):
         self._lock = threading.Lock()
         self._latest_metrics = None
         self._exercise_type = "Squats"
+
 
         model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
         base_option = self.python.BaseOptions(model_asset_path=model_path)
@@ -46,6 +41,12 @@ class VideoProcessorClass(VideoProcessorBase):
         }
 
         self._frame_timestamps_ms = 0
+        
+    def _load_mediapipe(self):
+        import mediapipe as mp
+        from mediapipe.tasks import python
+        from mediapipe.tasks.python import vision
+        return mp, python, vision
     
     def set_latest_metrics(self, metrics):
         with self._lock:
