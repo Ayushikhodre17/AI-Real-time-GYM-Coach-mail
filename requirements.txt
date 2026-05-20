@@ -15,11 +15,11 @@ matplotlib==3.10.9
 mediapipe==0.10.14
 ml_dtypes==0.5.4
 numpy==1.26.4
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.8.1.78
 opt_einsum==3.4.0
 packaging==26.2
 pillow==12.2.0
-protobuf==4.25.9
+protobuf==4.25.3
 pycparser==3.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
