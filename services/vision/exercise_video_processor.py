@@ -24,21 +24,17 @@ class VideoProcessorClass(VideoProcessorBase):
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     model_path = os.path.join(BASE_DIR, "ml_models", "pose_landmarker_full.task")
 
-    base_option = self.python.BaseOptions(model_asset_path=model_path)
+    base_option = python.BaseOptions(model_asset_path=model_path)
 
-    self.vision = self.vision
+    options = vision.PoseLandmarkerOptions(
+    base_options=base_option,
+    running_mode=vision.RunningMode.VIDEO,
+    min_pose_detection_confidence=0.7,
+    min_pose_presence_confidence=0.7,
+    min_tracking_confidence=0.7,
+)
 
-    options = self.vision.PoseLandmarkerOptions(
-        base_options=base_option,
-        running_mode=self.vision.RunningMode.VIDEO,
-        min_pose_detection_confidence=0.7,
-        min_pose_presence_confidence=0.7,
-        min_tracking_confidence=0.7,
-        output_segmentation_masks=False
-    )
-
-    self._landmarker = self.vision.PoseLandmarker.create_from_options(options)
-
+    self._landmarker = vision.PoseLandmarker.create_from_options(options)
     self._detectors = {
         "Squats": SquatDetector(),
         "Push-ups": PushUpDetector(),
@@ -207,7 +203,6 @@ class VideoProcessorClass(VideoProcessorBase):
             dtype=np.uint8
         )
 
-        mp = self.mp
 
         mp_image = mp.Image(
           image_format=mp.ImageFormat.SRGB,
