@@ -1,9 +1,7 @@
 ﻿streamlit
 streamlit-webrtc
-
-numpy==1.26.4
-opencv-python-headless==4.8.1.78
-pillow==12.2.0
+numpy
+opencv-python-headless
+pillow
 protobuf==3.20.3
-
-av
+groq
