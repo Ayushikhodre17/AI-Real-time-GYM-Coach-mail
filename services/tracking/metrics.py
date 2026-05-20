@@ -18,8 +18,15 @@ def sync_metrics_update(context):
     if not exercise:
         return
     
-    if hasattr(processor, "video_processor") and processor.video_processor:
-      processor.video_processor.set_exercise(exercise)
+    video_proc = getattr(processor, "video_processor", None)
+
+    if not video_proc:
+        return
+
+    video_proc.set_exercise(exercise)
+      
+
+    processor.video_processor.set_exercise(exercise)
     latest_metrics = processor.get_latest_metrics()
 
     if not latest_metrics:
