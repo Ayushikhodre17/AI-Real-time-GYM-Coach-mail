@@ -1,9 +1,6 @@
 import os
 import av
 import numpy as np
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 import threading
 from streamlit_webrtc import VideoProcessorBase
 from detectors.squat import SquatDetector
