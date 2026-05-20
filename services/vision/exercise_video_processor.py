@@ -12,34 +12,39 @@ from services.config.workout_config import POSE_CONNECTIONS
 
 
 class VideoProcessorClass(VideoProcessorBase):
-    def __init__(self):
-        
-        self.mp, self.python, self.vision = self._load_mediapipe()
-        self._lock = threading.Lock()
-        self._latest_metrics = None
-        self._exercise_type = "Squats"
+  def __init__(self):
 
+    self.mp, self.python, self.vision = self._load_mediapipe()
+
+    self._lock = threading.Lock()
+    self._latest_metrics = None
+    self._exercise_type = "Squats"
 
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     model_path = os.path.join(BASE_DIR, "ml_models", "pose_landmarker_full.task")
+
     base_option = self.python.BaseOptions(model_asset_path=model_path)
 
+    self.vision = self.vision
+
     options = self.vision.PoseLandmarkerOptions(
-    base_options=base_option,
-    running_mode=self.vision.RunningMode.VIDEO,
-    min_pose_detection_confidence=0.7,
-    min_pose_presence_confidence=0.7,
-    min_tracking_confidence=0.7,
-    output_segmentation_masks=False
-)
-      
+        base_options=base_option,
+        running_mode=self.vision.RunningMode.VIDEO,
+        min_pose_detection_confidence=0.7,
+        min_pose_presence_confidence=0.7,
+        min_tracking_confidence=0.7,
+        output_segmentation_masks=False
+    )
+
+    self._landmarker = self.vision.PoseLandmarker.create_from_options(options)
+
     self._detectors = {
-            "Squats": SquatDetector(),
-            "Push-ups": PushUpDetector(),
-            "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
-            "Shoulder Press": ShoulderPressDetector(),
-            "Lunges": LungesDetector(),
-        }
+        "Squats": SquatDetector(),
+        "Push-ups": PushUpDetector(),
+        "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
+        "Shoulder Press": ShoulderPressDetector(),
+        "Lunges": LungesDetector(),
+    }
 
     self._frame_timestamps_ms = 0
         
