@@ -20,10 +20,11 @@ class VideoProcessorClass(VideoProcessorBase):
         self._exercise_type = "Squats"
 
 
-        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
-        base_option = self.python.BaseOptions(model_asset_path=model_path)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    model_path = os.path.join(BASE_DIR, "ml_models", "pose_landmarker_full.task")
+    base_option = self.python.BaseOptions(model_asset_path=model_path)
 
-        options = self.vision.PoseLandmarkerOptions(
+    options = self.vision.PoseLandmarkerOptions(
     base_options=base_option,
     running_mode=self.vision.RunningMode.VIDEO,
     min_pose_detection_confidence=0.7,
@@ -32,7 +33,7 @@ class VideoProcessorClass(VideoProcessorBase):
     output_segmentation_masks=False
 )
       
-        self._detectors = {
+    self._detectors = {
             "Squats": SquatDetector(),
             "Push-ups": PushUpDetector(),
             "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
@@ -40,7 +41,7 @@ class VideoProcessorClass(VideoProcessorBase):
             "Lunges": LungesDetector(),
         }
 
-        self._frame_timestamps_ms = 0
+    self._frame_timestamps_ms = 0
         
     def _load_mediapipe(self):
         import mediapipe as mp
