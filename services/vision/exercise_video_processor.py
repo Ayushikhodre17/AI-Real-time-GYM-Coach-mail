@@ -23,6 +23,8 @@ class VideoProcessorClass(VideoProcessorBase):
 
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     model_path = os.path.join(BASE_DIR, "ml_models", "pose_landmarker_full.task")
+    if not os.path.exists(model_path):
+      raise FileNotFoundError("Model file not found at: " + model_path)
 
     base_option = python.BaseOptions(model_asset_path=model_path)
 
@@ -204,12 +206,16 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
 
+       
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         mp_image = mp.Image(
-          image_format=mp.ImageFormat.SRGB,
-          data=cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            image_format=mp.ImageFormat.SRGB,
+            data=rgb_image
 )
 
-        self._frame_timestamps_ms += 30
+
+        self._frame_timestamps_ms += int(1000 / 30)
         result = self._landmarker.detect_for_video(mp_image, self._frame_timestamps_ms)
 
         if result.pose_landmarks:
