@@ -1,11 +1,12 @@
 import os
+import cv2
 import av
 import numpy as np
-import threading
 import mediapipe as mp
+import threading
+from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from streamlit_webrtc import VideoProcessorBase
 from detectors.squat import SquatDetector
 from detectors.pushup import PushUpDetector
 from detectors.biceps_curl import BicepsCurlDetector
@@ -15,38 +16,34 @@ from services.config.workout_config import POSE_CONNECTIONS
 
 
 class VideoProcessorClass(VideoProcessorBase):
-  def __init__(self):
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._latest_metrics = None
+        self._exercise_type = "Squats"
 
-    self._lock = threading.Lock()
-    self._latest_metrics = None
-    self._exercise_type = "Squats"
+        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
+        base_option = python.BaseOptions(model_asset_path=model_path)
 
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    model_path = os.path.join(BASE_DIR, "ml_models", "pose_landmarker_full.task")
-    if not os.path.exists(model_path):
-      raise FileNotFoundError("Model file not found at: " + model_path)
+        options = vision.PoseLandmarkerOptions(
+            base_options=base_option,
+            running_mode=vision.RunningMode.VIDEO,
+            min_pose_detection_confidence=0.7,
+            min_pose_presence_confidence=0.7,
+            min_tracking_confidence=0.7,
+            output_segmentation_masks=False
+        )
 
-    base_option = python.BaseOptions(model_asset_path=model_path)
+        self._landmarker = vision.PoseLandmarker.create_from_options(options)
 
-    options = vision.PoseLandmarkerOptions(
-    base_options=base_option,
-    running_mode=vision.RunningMode.VIDEO,
-    min_pose_detection_confidence=0.7,
-    min_pose_presence_confidence=0.7,
-    min_tracking_confidence=0.7,
-)
+        self._detectors = {
+            "Squats": SquatDetector(),
+            "Push-ups": PushUpDetector(),
+            "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
+            "Shoulder Press": ShoulderPressDetector(),
+            "Lunges": LungesDetector(),
+        }
 
-    self._landmarker = vision.PoseLandmarker.create_from_options(options)
-    self._detectors = {
-        "Squats": SquatDetector(),
-        "Push-ups": PushUpDetector(),
-        "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
-        "Shoulder Press": ShoulderPressDetector(),
-        "Lunges": LungesDetector(),
-    }
-
-    self._frame_timestamps_ms = 0
-        
+        self._frame_timestamps_ms = 0
     
     def set_latest_metrics(self, metrics):
         with self._lock:
@@ -65,7 +62,6 @@ class VideoProcessorClass(VideoProcessorBase):
             return self._exercise_type
         
     def _draw_skeleton(self, img, landmarks):
-        import cv2
         h, w = img.shape[:2]
 
         for start_idx, end_idx in POSE_CONNECTIONS:
@@ -92,7 +88,6 @@ class VideoProcessorClass(VideoProcessorBase):
                 )
             
     def _draw_no_pose_warnings(self, img):
-        import cv2
         cv2.putText(
             img,
             "NO POSE DETECTED",
@@ -129,7 +124,6 @@ class VideoProcessorClass(VideoProcessorBase):
 
 
     def _draw_squats_overlays(self, img, metrics):
-        import cv2
         h, _ = img.shape[:2]
 
         cv2.putText(
@@ -143,7 +137,6 @@ class VideoProcessorClass(VideoProcessorBase):
         )
     
     def _draw_pushup_overlays(self, img, metrics):
-        import cv2
         h, _ = img.shape[:2]
 
         cv2.putText(
@@ -157,7 +150,6 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def _draw_curl_overlays(self, img, metrics):
-        import cv2
         h, _ = img.shape[:2]
 
         cv2.putText(
@@ -171,7 +163,6 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def _draw_press_overlays(self, img, metrics):
-        import cv2
         h, _ = img.shape[:2]
 
         cv2.putText(
@@ -185,7 +176,6 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def _draw_lunge_overlays(self, img, metrics):
-        import cv2
         h, _ = img.shape[:2]
 
         cv2.putText(
@@ -199,23 +189,17 @@ class VideoProcessorClass(VideoProcessorBase):
         )
 
     def recv(self, frame):
-        import cv2
         image = np.asarray(
             cv2.flip(frame.to_ndarray(format="bgr24"), 1),
             dtype=np.uint8
         )
 
-
-       
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
         mp_image = mp.Image(
             image_format=mp.ImageFormat.SRGB,
-            data=rgb_image
-)
+            data=cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        )
 
-
-        self._frame_timestamps_ms += int(1000 / 30)
+        self._frame_timestamps_ms += 30
         result = self._landmarker.detect_for_video(mp_image, self._frame_timestamps_ms)
 
         if result.pose_landmarks:
@@ -245,4 +229,5 @@ class VideoProcessorClass(VideoProcessorBase):
                     self._latest_metrics = {"pose_detected": False}
 
         return av.VideoFrame.from_ndarray(image, format="bgr24")
+    
     

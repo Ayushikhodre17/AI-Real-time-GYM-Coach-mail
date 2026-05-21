@@ -10,20 +10,15 @@ def sync_metrics_update(context):
     
     processor = getattr(context, "video_processor", None)
 
-    if processor is None:
-        return
-
-    if not hasattr(processor, "set_exercise"):
-         return
+    if not processor:
+        return 
     
     exercise = st.session_state.get("exercise_type")
 
     if not exercise:
-      return
-
-    processor.set_exercise(exercise)
+        return
     
-   
+    processor.set_exercise(exercise)
     latest_metrics = processor.get_latest_metrics()
 
     if not latest_metrics:
